@@ -4,5 +4,5 @@ using UnityEngine;
 
 public static class Game
 {
-    public const int PixelsPerUnit = 10;
+    public const int PixelsPerUnit = 20;
 }

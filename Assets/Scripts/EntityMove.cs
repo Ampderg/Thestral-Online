@@ -42,7 +42,6 @@ public class EntityMove : MonoBehaviour
     {
         if (moveTransform == null) moveTransform = transform;
         entity = GetComponent<Entity>();
-        targetPosition = transform.position;
     }
 
     protected virtual void Update()

@@ -32,10 +32,18 @@ public class ServerLink : MonoBehaviour
     private Transform spawnedEntityParent;
     [SerializeField]
     protected SpawnableEntityLibrary spawnableEntityLibrary;
+    public static event EventHandler<EntityCreatedEventArgs> OnEntityCreated;
+
+    public class EntityCreatedEventArgs : EventArgs
+    {
+        public uint entityTypeId;
+        public Entity entityInstance;
+    }
 
     //Coroutine communication
     private Coroutine connectionCoroutine;
     private string validMessage = null;
+    private int characterSceneId = 1;
 
     // Start is called before the first frame update
     void Start()
@@ -51,7 +59,7 @@ public class ServerLink : MonoBehaviour
         messageId = new IdAssigner();
         messagesSent = new Dictionary<uint, string>();
         networkedEntities = new Dictionary<uint, Entity>();
-        connectionCoroutine = StartCoroutine(CrtConnect());
+        Connect(this.ipString, this.port);
     }
 
     private void OnDestroy()
@@ -63,6 +71,13 @@ public class ServerLink : MonoBehaviour
     
 
     #region Joining
+
+    private void Connect(string ip, int port)
+    {
+        this.ipString = ip;
+        this.port = port;
+        connectionCoroutine = StartCoroutine(CrtConnect());
+    }
 
     private IEnumerator CrtConnect()
     {
@@ -82,12 +97,23 @@ public class ServerLink : MonoBehaviour
         connectionCoroutine = null;
     }
 
-    private void Disconnect()
+    /// <summary>
+    /// Disconnects the player from the server, deletes the ServerLink object, and returns to the lobby.
+    /// </summary>
+    private void Disconnect(bool tellServer = true)
     {
-        SendString("/disconnect");
-        if (connectionCoroutine != null)
-            StopCoroutine(connectionCoroutine);
-        socket.Disconnect(false);
+        if (socket.Connected)
+        {
+            if (tellServer)
+                SendString("/disconnect");
+
+            if (connectionCoroutine != null)
+                StopCoroutine(connectionCoroutine);
+            socket.Disconnect(false);
+            Destroy(gameObject);
+            //return to lobby
+            SceneManager.LoadScene(0);
+        }
     }
 
     private bool JoinServer(string ipString, int port)
@@ -117,6 +143,7 @@ public class ServerLink : MonoBehaviour
     private void ValidateUserInfo()
     {
         SendString(string.Format("/validate|{0}", userName));
+        //TODO: Send desired character to server
     }
 
     private void JoinScene(int sceneId)
@@ -163,6 +190,7 @@ public class ServerLink : MonoBehaviour
                     string[] msgTokens = cmdTokens[i].Split('|');
                     try
                     {
+                        //switch on command
                         switch (msgTokens[0])
                         {
                             case "validate":
@@ -182,6 +210,9 @@ public class ServerLink : MonoBehaviour
                                         int.Parse(msgTokens[4]), int.Parse(msgTokens[5]), true);
                                 else
                                     MoveRecieved(uint.Parse(msgTokens[1]), int.Parse(msgTokens[2]), int.Parse(msgTokens[3]));
+                                break;
+                            case "forceDisconnect":
+                                Disconnect(false);
                                 break;
                         }
                     }
@@ -216,6 +247,11 @@ public class ServerLink : MonoBehaviour
         instance.networkedEntities.Remove(entityInstanceId);
     }
 
+    /// <summary>
+    /// Sends the local authority entity's position to the server.
+    /// </summary>
+    /// <param name="entityInstanceId"></param>
+    /// <param name="position"></param>
     internal static void SendMovement(uint entityInstanceId, Vector3 position)
     {
         int pixelX = Mathf.RoundToInt(position.x * Game.PixelsPerUnit);
@@ -249,11 +285,12 @@ public class ServerLink : MonoBehaviour
     {
         Debug.Log("Validation Result: " + message);
         validMessage = message;
+        //TODO: Get player's current scene from validation
     }
 
-    private void CreateEntityRecieved(uint instanceId, uint entityId, uint entityInstanceId, bool hasAuthority, int pixelX, int pixelY)
+    private void CreateEntityRecieved(uint instanceId, uint entityTypeId, uint entityInstanceId, bool hasAuthority, int pixelX, int pixelY)
     {
-        Debug.Log($"Creating entity with id {entityId} at position [{pixelX}, {pixelY}]");
+        Debug.Log($"Creating entity with id {entityTypeId} at position [{pixelX}, {pixelY}]");
         if(spawnedEntityParent == null)
         {
             GameObject parent = GameObject.Find("SpawnedEntityParent");
@@ -261,10 +298,19 @@ public class ServerLink : MonoBehaviour
                 parent = new GameObject("SpawnedEntityParent");
             spawnedEntityParent = parent.transform;
         }
-        GameObject o = Instantiate(spawnableEntityLibrary.GetEntity(entityId), spawnedEntityParent);
+        GameObject o = Instantiate(spawnableEntityLibrary.GetEntity(entityTypeId), spawnedEntityParent);
         o.transform.position = new Vector3((float)pixelX / Game.PixelsPerUnit, (float)pixelY / Game.PixelsPerUnit, 0f);
         Entity e = o.AddComponent<Entity>();
-        e.Create(entityInstanceId, entityId, hasAuthority);
+        e.Create(entityInstanceId, entityTypeId, hasAuthority);
+        EntityMove move = o.GetComponent<EntityMove>();
+        if(move != null)
+        {
+            move.targetPosition = o.transform.position;
+        }
+        EntityCreatedEventArgs args = new EntityCreatedEventArgs();
+        args.entityInstance = e;
+        args.entityTypeId = entityTypeId;
+        OnEntityCreated?.Invoke(this, args);
     }
 
     private void DestroyEntityRecieved(uint entityInstanceId)
@@ -286,7 +332,7 @@ public class ServerLink : MonoBehaviour
             Transform t = networkedEntities[entityInstanceId].transform;
             Vector3 target = new Vector3((float)pixelX / Game.PixelsPerUnit, (float)pixelY / Game.PixelsPerUnit, t.position.z);
             EntityMove m = t.GetComponent<EntityMove>();
-            if (m != null)
+            if (m != null && !networkedEntities[entityInstanceId].HasAuthority())
             {
                 m.targetPosition = target;
                 if(hasVel)
