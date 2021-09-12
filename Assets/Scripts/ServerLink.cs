@@ -15,20 +15,25 @@ public class ServerLink : MonoBehaviour
     //Server info
     [SerializeField]
     private string ipString = "127.0.0.1";
+    public void SetIP(string ip) { ipString = ip; }
     [SerializeField]
     private int port = 59873;
+    public void SetPort(string portString) { int.TryParse(portString, out port); }
     private Socket socket;
 
     internal static void SendChatMessage(string text)
     {
         text = text.Substring(0, Math.Min(text.Length, 50));
-        instance.SendString("/say|" + text);
+        instance.SendString("say|" + text);
     }
 
     //User info
     [SerializeField]
     private string userName = "Player";
-    
+
+    [SerializeField]
+    private GameObject activeWhenConnected;
+
     //Message handling
     private IdAssigner messageId;
     private Dictionary<uint, string> messagesSent;
@@ -65,7 +70,6 @@ public class ServerLink : MonoBehaviour
         messageId = new IdAssigner();
         messagesSent = new Dictionary<uint, string>();
         networkedEntities = new Dictionary<uint, Entity>();
-        Connect(this.ipString, this.port);
     }
 
     private void OnDestroy()
@@ -77,6 +81,11 @@ public class ServerLink : MonoBehaviour
     
 
     #region Joining
+
+    public void Connect()
+    {
+        Connect(this.ipString, this.port);
+    }
 
     private void Connect(string ip, int port)
     {
@@ -98,6 +107,7 @@ public class ServerLink : MonoBehaviour
             if (validMessage.ToLower() == "valid")
             {
                 JoinScene(1);
+                activeWhenConnected.SetActive(true);
             }
         }
         connectionCoroutine = null;
@@ -111,7 +121,7 @@ public class ServerLink : MonoBehaviour
         if (socket.Connected)
         {
             if (tellServer)
-                SendString("/disconnect");
+                SendString("disconnect");
 
             if (connectionCoroutine != null)
                 StopCoroutine(connectionCoroutine);
@@ -148,7 +158,7 @@ public class ServerLink : MonoBehaviour
 
     private void ValidateUserInfo()
     {
-        SendString(string.Format("/validate|{0}", userName));
+        SendString(string.Format("validate|{0}", userName));
         //TODO: Send desired character to server
     }
 
@@ -156,7 +166,7 @@ public class ServerLink : MonoBehaviour
     {
         //display loading screen
         SceneManager.LoadScene(sceneId);
-        SendString(string.Format("/joinScene|{0}", sceneId));
+        SendString(string.Format("joinScene|{0}", sceneId));
     }
 
     #endregion
@@ -187,53 +197,50 @@ public class ServerLink : MonoBehaviour
             uint msgId;
             bool hasId = uint.TryParse(tokensColon[0], out msgId);
             //split the message on slashes to get the commands
-            string[] cmdTokens = tokensColon[1].Split('/');
-            for (int i = 1; i < cmdTokens.Length; i++)
+
+            //split the command on pipes to get the parameters
+            string[] msgTokens = tokensColon[1].Split('|');
+            try
             {
-                if (cmdTokens[i].Length > 0)
+                //switch on command
+                switch (msgTokens[0])
                 {
-                    //split the command on pipes to get the parameters
-                    string[] msgTokens = cmdTokens[i].Split('|');
-                    try
-                    {
-                        //switch on command
-                        switch (msgTokens[0])
-                        {
-                            case "validate":
-                                ValidationResultRecieved(msgTokens[1]);
-                                break;
-                            case "createEntity":
-                                CreateEntityRecieved(uint.Parse(msgTokens[5]), uint.Parse(msgTokens[1]), uint.Parse(msgTokens[6]), bool.Parse(msgTokens[4]), 
-                                    int.Parse(msgTokens[2]), int.Parse(msgTokens[3]));
-                                break;
-                            case "destroyEntity":
-                                DestroyEntityRecieved(uint.Parse(msgTokens[1]));
-                                break;
-                            case "m":
-                            case "move":
-                                if(msgTokens.Length > 4)
-                                    MoveRecieved(uint.Parse(msgTokens[1]), int.Parse(msgTokens[2]), int.Parse(msgTokens[3]),
-                                        int.Parse(msgTokens[4]), int.Parse(msgTokens[5]), true);
-                                else
-                                    MoveRecieved(uint.Parse(msgTokens[1]), int.Parse(msgTokens[2]), int.Parse(msgTokens[3]));
-                                break;
-                            case "forceDisconnect":
-                                Disconnect(false);
-                                break;
-                            case "setPlayerInfo":
-                                SetPlayerInfoRecieved();
-                                break;
-                            case "recieveChatMsg":
-                                ChatMessageRecieved(msgTokens[1], msgTokens[2]);
-                                break;
-                        }
-                    }
-                    catch(Exception e)
-                    {
-                        Debug.LogError("Encountered Exception within command execution:" + Environment.NewLine + e + Environment.NewLine + 
-                            "Message: " + s);
-                    }
+                    case "validate":
+                        ValidationResultRecieved(msgTokens[1]);
+                        break;
+                    case "createEntity":
+                        CreateEntityRecieved(uint.Parse(msgTokens[5]), uint.Parse(msgTokens[1]), uint.Parse(msgTokens[6]), bool.Parse(msgTokens[4]), 
+                            int.Parse(msgTokens[2]), int.Parse(msgTokens[3]));
+                        break;
+                    case "destroyEntity":
+                        DestroyEntityRecieved(uint.Parse(msgTokens[1]));
+                        break;
+                    case "m":
+                    case "move":
+                        if(msgTokens.Length > 4)
+                            MoveRecieved(uint.Parse(msgTokens[1]), int.Parse(msgTokens[2]), int.Parse(msgTokens[3]),
+                                int.Parse(msgTokens[4]), int.Parse(msgTokens[5]), true);
+                        else
+                            MoveRecieved(uint.Parse(msgTokens[1]), int.Parse(msgTokens[2]), int.Parse(msgTokens[3]));
+                        break;
+                    case "forceDisconnect":
+                        Disconnect(false);
+                        break;
+                    case "setPlayerInfo":
+                        SetPlayerInfoRecieved();
+                        break;
+                    case "recieveChatMsg":
+                        ChatMessageRecieved(msgTokens[1], msgTokens[2]);
+                        break;
+                    default:
+                        Debug.LogWarning("Recieved a message from the server that doesn't exist on the client!" + Environment.NewLine + s);
+                        break;
                 }
+            }
+            catch(Exception e)
+            {
+                Debug.LogError("Encountered Exception within command execution:" + Environment.NewLine + e + Environment.NewLine + 
+                    "Message: " + s);
             }
 
             if (hasId && messagesSent.ContainsKey(msgId))
@@ -269,7 +276,7 @@ public class ServerLink : MonoBehaviour
         int pixelX = Mathf.RoundToInt(position.x * Game.PixelsPerUnit);
         int pixelY = Mathf.RoundToInt(position.y * Game.PixelsPerUnit);
         if (instance != null)
-            instance.SendStringWithoutId($"/m|{entityInstanceId}|{pixelX}|{pixelY}");
+            instance.SendStringWithoutId($"m|{entityInstanceId}|{pixelX}|{pixelY}");
     }
     #endregion
 

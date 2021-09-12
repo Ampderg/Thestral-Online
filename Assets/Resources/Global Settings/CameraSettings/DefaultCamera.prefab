@@ -119,6 +119,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ppc: {fileID: 3965539045412160101}
   aspectRatio: {x: 16, y: 9}
-  offset: {x: 0, y: 1.3, z: -25}
+  offset: {x: -0.5, y: 1.6, z: -25}
   zoom: 4
   targetTransform: {fileID: 0}
+  flipReference: {fileID: 0}
+  cameraSpeed: 15
+  cameraSnapDistance: 0.23

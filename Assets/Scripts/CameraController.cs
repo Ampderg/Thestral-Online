@@ -17,11 +17,18 @@ public class CameraController : MonoBehaviour
     private Vector3 offset = new Vector3(0, 1f, -25f);
 
     [SerializeField]
-    [Range(1f, 4f)]
+    [Range(1f, 5f)]
     private float zoom = 3;
 
     [SerializeField]
     private Transform targetTransform;
+    [SerializeField]
+    private Transform flipReference;
+
+    [SerializeField]
+    private float cameraSpeed = 20;
+    [SerializeField]
+    private float cameraSnapDistance = 0.1f;
 
     // Start is called before the first frame update
     void Start()
@@ -40,6 +47,7 @@ public class CameraController : MonoBehaviour
         if(e.entityInstance.HasAuthority())
         {
             targetTransform = e.entityInstance.transform;
+            flipReference = targetTransform.Find("CharacterDisplay");
         }
     }
 
@@ -57,13 +65,49 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         //handle camera zoom
-        ppc.refResolutionX = (int)(aspectRatio.x * 100 * zoom);
-        ppc.refResolutionY = (int)(aspectRatio.y * 100 * zoom);
+        if (zoom < 5)
+        {
+            ppc.assetsPPU = 20;
+            ppc.refResolutionX = (int)(aspectRatio.x * 100 * zoom);
+            ppc.refResolutionY = (int)(aspectRatio.y * 100 * zoom);
+        }
+        else
+        {
+            ppc.assetsPPU = 10;
+            ppc.refResolutionX = (int)(aspectRatio.x * 100 * 4);
+            ppc.refResolutionY = (int)(aspectRatio.y * 100 * 4);
+        }
         if (Screen.width != storedResolution.x || Screen.height != storedResolution.y)
             UpdateAspectRatio();
+        
+        if(Input.GetButtonDown("Camera Zoom"))
+        {
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                zoom = Input.GetAxisRaw("Camera Zoom") > 0 ? 1 : 5;
+            else
+                zoom -= Mathf.Sign(Input.GetAxisRaw("Camera Zoom"));
+            if (zoom < 1) zoom = 1;
+            if (zoom > 5) zoom = 5;
+        }
 
-        if(targetTransform != null)
-            transform.position = targetTransform.position + offset;
+        if (targetTransform != null)
+        {
+            Vector3 targetPos;
+            if (flipReference)
+            {
+                Vector3 off = offset;
+                off.x *= Mathf.Sign(flipReference.localScale.x);
+                targetPos = targetTransform.position + off;
+            }
+            else
+            {
+                targetPos = targetTransform.position + offset;
+            }
+            if (Vector3.Distance(transform.position, targetPos) > cameraSnapDistance)
+                transform.position = Vector3.MoveTowards(transform.position, targetPos, cameraSpeed * Time.deltaTime);
+            else
+                transform.position = targetPos;
+        }
     }
 
 }

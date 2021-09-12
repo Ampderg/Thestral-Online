@@ -71,7 +71,7 @@ public class ChatSystem : MonoBehaviour
 
     private string MessageToString(ChatBoxItem item)
     {
-        string time = DateTime.Now.ToString("hh:mm:ss tt");
+        string time = DateTime.Now.ToString("HH:mm:ss");
         return $"[{time}] {item.username}: {item.message}";
     }
 

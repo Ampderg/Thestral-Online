@@ -60,15 +60,15 @@
     <Compile Include="Assets\Scripts\IdAssigner.cs" />
     <Compile Include="Assets\Scripts\Game.cs" />
     <Compile Include="Assets\Scripts\Entities\Entity.cs" />
+    <Compile Include="Assets\Scripts\CameraController.cs" />
     <Compile Include="Assets\Scripts\ConnectionTest.cs" />
     <Compile Include="Assets\Scripts\PlayerMove.cs" />
+    <Compile Include="Assets\Scripts\Player Communication\ChatSystem.cs" />
     <Compile Include="Assets\Scripts\PlayerAnimationHandler.cs" />
     <Compile Include="Assets\Scripts\Entities\SpawnableEntityLibrary.cs" />
+    <Compile Include="Assets\Scripts\Entities\EntityPlayer.cs" />
     <Compile Include="Assets\Scripts\ServerLink.cs" />
     <Compile Include="Assets\Scripts\ServerInstanceInfo.cs" />
-    <Compile Include="Assets\Scripts\CameraController.cs" />
-    <Compile Include="Assets\Scripts\Player Communication\ChatSystem.cs" />
-    <Compile Include="Assets\Scripts\Entities\EntityPlayer.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
