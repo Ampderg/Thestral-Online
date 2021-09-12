@@ -19,6 +19,9 @@ public class ServerLink : MonoBehaviour
     [SerializeField]
     private int port = 59873;
     public void SetPort(string portString) { int.TryParse(portString, out port); }
+
+
+
     private Socket socket;
 
     internal static void SendChatMessage(string text)
@@ -30,6 +33,11 @@ public class ServerLink : MonoBehaviour
     //User info
     [SerializeField]
     private string userName = "Player";
+    public void SetLoginUsername(string userName) { this.userName = userName; }
+
+    [SerializeField]
+    private string password;
+    public void SetLoginPassword(string password) { this.password = password; }
 
     [SerializeField]
     private GameObject activeWhenConnected;
@@ -158,7 +166,7 @@ public class ServerLink : MonoBehaviour
 
     private void ValidateUserInfo()
     {
-        SendString(string.Format("validate|{0}", userName));
+        SendString(string.Format("validate|{0}|{1}", userName, ""));
         //TODO: Send desired character to server
     }
 
@@ -210,7 +218,7 @@ public class ServerLink : MonoBehaviour
                         break;
                     case "createEntity":
                         CreateEntityRecieved(uint.Parse(msgTokens[5]), uint.Parse(msgTokens[1]), uint.Parse(msgTokens[6]), bool.Parse(msgTokens[4]), 
-                            int.Parse(msgTokens[2]), int.Parse(msgTokens[3]));
+                            int.Parse(msgTokens[2]), int.Parse(msgTokens[3]), msgTokens[7]);
                         break;
                     case "destroyEntity":
                         DestroyEntityRecieved(uint.Parse(msgTokens[1]));
@@ -227,10 +235,10 @@ public class ServerLink : MonoBehaviour
                         Disconnect(false);
                         break;
                     case "setPlayerInfo":
-                        SetPlayerInfoRecieved();
+                        SetPlayerInfoRecieved(uint.Parse(msgTokens[1]), uint.Parse(msgTokens[2]), msgTokens[3]);
                         break;
                     case "recieveChatMsg":
-                        ChatMessageRecieved(msgTokens[1], msgTokens[2]);
+                        ChatMessageRecieved(msgTokens[1], msgTokens[3], msgTokens[2]);
                         break;
                     default:
                         Debug.LogWarning("Recieved a message from the server that doesn't exist on the client!" + Environment.NewLine + s);
@@ -307,7 +315,7 @@ public class ServerLink : MonoBehaviour
         //TODO: Get player's current scene from validation
     }
 
-    private void CreateEntityRecieved(uint instanceId, uint entityTypeId, uint entityInstanceId, bool hasAuthority, int pixelX, int pixelY)
+    private void CreateEntityRecieved(uint instanceId, uint entityTypeId, uint entityInstanceId, bool hasAuthority, int pixelX, int pixelY, string displayName)
     {
         Debug.Log($"Creating entity with id {entityTypeId} at position [{pixelX}, {pixelY}]");
         if(spawnedEntityParent == null)
@@ -320,7 +328,8 @@ public class ServerLink : MonoBehaviour
         GameObject o = Instantiate(spawnableEntityLibrary.GetEntity(entityTypeId), spawnedEntityParent);
         o.transform.position = new Vector3((float)pixelX / Game.PixelsPerUnit, (float)pixelY / Game.PixelsPerUnit, 0f);
         Entity e = o.AddComponent<Entity>();
-        e.Create(entityInstanceId, entityTypeId, hasAuthority);
+        e.Create(entityInstanceId, entityTypeId, hasAuthority, displayName);
+        o.gameObject.name = displayName;
         EntityMove move = o.GetComponent<EntityMove>();
         if(move != null)
         {
@@ -370,11 +379,14 @@ public class ServerLink : MonoBehaviour
     /// Called when a player joins or changes their player info in your instance.
     /// Used to update character appearance, controlled entity id, username, etc.
     /// </summary>
-    private void SetPlayerInfoRecieved()
+    private void SetPlayerInfoRecieved(uint playerId, uint entityInstanceId, string displayName)
     {
+        Debug.Log($"{playerId} {entityInstanceId} {displayName}");
         //TODO: add player info
         //player id
         //username
+        networkedEntities[entityInstanceId].DisplayName = displayName;
+        networkedEntities[entityInstanceId].gameObject.name = displayName;
         //character appearance
         //controlled entity
     }
@@ -382,9 +394,9 @@ public class ServerLink : MonoBehaviour
     /// <summary>
     /// Called when a chat message is sent to the local player
     /// </summary>
-    private void ChatMessageRecieved(string channel, string message)
+    private void ChatMessageRecieved(string channel, string username, string message)
     {
-        ChatSystem.OnRecieveChatMessage(channel, message);
+        ChatSystem.OnRecieveChatMessage(channel, username, message);
     }
     #endregion
 }

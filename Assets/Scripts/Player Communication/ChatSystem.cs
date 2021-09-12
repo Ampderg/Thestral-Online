@@ -46,11 +46,11 @@ public class ChatSystem : MonoBehaviour
         ServerLink.SendChatMessage(text);
     }
 
-    public static void OnRecieveChatMessage(string channel, string message)
+    public static void OnRecieveChatMessage(string channel, string username, string message)
     {
         ChatBoxItem item = new ChatBoxItem();
         item.message = message;
-        item.username = "Player";
+        item.username = username;
         try
         {
             item.category = (ChatCategory)Enum.Parse(typeof(ChatCategory), channel, true);

@@ -5,10 +5,11 @@ using UnityEngine;
 
 public class Entity : MonoBehaviour
 {
-    internal uint EntityInstanceId { get; private set; }
+    public uint EntityInstanceId { get; protected set; }
     [SerializeField]
-    private bool hasAuthority;
-    internal uint EntityTypeId { get; private set; }
+    protected bool hasAuthority;
+    public uint EntityTypeId { get; protected set; }
+    public string DisplayName { get; set; }
 
 
     protected virtual void OnDestroy()
@@ -16,11 +17,12 @@ public class Entity : MonoBehaviour
         ServerLink.DeregisterEntity(EntityInstanceId);
     }
 
-    internal virtual void Create(uint entityInstanceId, uint entityId, bool hasAuthority)
+    internal virtual void Create(uint entityInstanceId, uint entityId, bool hasAuthority, string displayName)
     {
         this.EntityInstanceId = entityInstanceId;
         this.hasAuthority = hasAuthority;
         this.EntityTypeId = entityId;
+        this.DisplayName = displayName;
         ServerLink.RegisterEntity(this, entityInstanceId);
     }
 
