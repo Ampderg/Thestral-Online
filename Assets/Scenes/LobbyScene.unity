@@ -947,10 +947,10 @@ RectTransform:
   m_Father: {fileID: 8920587528819319264}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.2738654, y: 0.055205043}
-  m_AnchoredPosition: {x: 0, y: -2.0002747}
-  m_SizeDelta: {x: 0, y: -3.9993935}
+  m_AnchorMin: {x: 0, y: -0.0000012314393}
+  m_AnchorMax: {x: 0.2738654, y: 0.04668195}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: -0.0000009536743}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &370969213
 MonoBehaviour:
@@ -1240,7 +1240,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0, g: 0, b: 0, a: 0.59607846}
   m_CustomCaretColor: 1
   m_SelectionColor: {r: 0.75, g: 0.85919535, b: 1, a: 0.3882353}
-  m_Text: 192.168.1.177
+  m_Text: server.ampderg.com
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 2
   m_ReadOnly: 0
@@ -1899,7 +1899,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "192.168.1.177\u200B"
+  m_text: "server.ampderg.com\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9bb8f10bf4550b744a834d0547cdd56b, type: 2}
   m_sharedMaterial: {fileID: 176360440196343655, guid: 9bb8f10bf4550b744a834d0547cdd56b,
@@ -2808,9 +2808,9 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 700, y: 460}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -4479,10 +4479,10 @@ RectTransform:
   m_Father: {fileID: 370969212}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -2.2249908, y: -0.6099987}
-  m_SizeDelta: {x: -15.55, y: -11.58}
+  m_AnchorMin: {x: 0.02533183, y: 0.23643397}
+  m_AnchorMax: {x: 0.9543572, y: 0.7078809}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -0.00000333786, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1710911054
 MonoBehaviour:
@@ -4612,7 +4612,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb5d7ea8e3b3f5d4cbd1a8aa7019915b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ipString: 192.168.1.177
+  ipString: server.ampderg.com
   port: 59873
   userName: 
   password: 
@@ -4924,7 +4924,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 42
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 800, y: 460}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -4947,10 +4947,10 @@ RectTransform:
   m_Father: {fileID: 370969212}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.045288086, y: 79.25939}
-  m_SizeDelta: {x: 0.09051514, y: 123.02417}
+  m_AnchorMin: {x: 0.00000013929096, y: 0.8100512}
+  m_AnchorMax: {x: 1.0004133, y: 7.425319}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: -0.0000076293945}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3561443354623917462
 GameObject:

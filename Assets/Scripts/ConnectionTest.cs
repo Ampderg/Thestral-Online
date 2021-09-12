@@ -34,9 +34,4 @@ public class ConnectionTest : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

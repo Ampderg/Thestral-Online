@@ -54,6 +54,22 @@ public class CameraController : MonoBehaviour
     void UpdateAspectRatio()
     {
         storedResolution = new Vector2(Screen.width, Screen.height);
+        bool reset = false;
+        if(storedResolution.x % 2 != 0)
+        {
+            storedResolution.x--;
+            reset = true;
+        }
+        if(storedResolution.y % 2 != 0)
+        {
+            storedResolution.y--;
+            reset = true;
+        }
+        if(reset)
+        {
+            Debug.Log("Setting resolution to: " + storedResolution);
+            Screen.SetResolution((int)storedResolution.x, (int)storedResolution.y, false);
+        }
         aspectRatio = storedResolution.normalized;
         if (aspectRatio.y < aspectRatio.x)
             aspectRatio /= aspectRatio.y;
