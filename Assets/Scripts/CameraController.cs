@@ -12,6 +12,7 @@ public class CameraController : MonoBehaviour
     [SerializeField]
     private Vector2 aspectRatio = new Vector2(16, 9);
     private Vector2 storedResolution;
+    private float resetResolutionTimer = -1;
 
     [SerializeField]
     private Vector3 offset = new Vector3(0, 1f, -25f);
@@ -54,22 +55,11 @@ public class CameraController : MonoBehaviour
     void UpdateAspectRatio()
     {
         storedResolution = new Vector2(Screen.width, Screen.height);
-        bool reset = false;
-        if(storedResolution.x % 2 != 0)
-        {
-            storedResolution.x--;
-            reset = true;
-        }
-        if(storedResolution.y % 2 != 0)
-        {
-            storedResolution.y--;
-            reset = true;
-        }
-        if(reset)
-        {
-            Debug.Log("Setting resolution to: " + storedResolution);
-            Screen.SetResolution((int)storedResolution.x, (int)storedResolution.y, false);
-        }
+        if (storedResolution.x % 2 != 0 || storedResolution.y % 2 != 0)
+            resetResolutionTimer = 0.5f;
+        else
+            resetResolutionTimer = -1;
+
         aspectRatio = storedResolution.normalized;
         if (aspectRatio.y < aspectRatio.x)
             aspectRatio /= aspectRatio.y;
@@ -95,8 +85,20 @@ public class CameraController : MonoBehaviour
         }
         if (Screen.width != storedResolution.x || Screen.height != storedResolution.y)
             UpdateAspectRatio();
-        
-        if(Input.GetButtonDown("Camera Zoom"))
+
+        //if (resetResolutionTimer > 0)
+        //{
+        //    resetResolutionTimer -= Time.deltaTime;
+        //    if (resetResolutionTimer <= 0)
+        //    {
+        //        if (storedResolution.x % 2 != 0) storedResolution.x--;
+        //        if (storedResolution.y % 2 != 0) storedResolution.y--;
+        //        Screen.SetResolution((int)storedResolution.x, (int)storedResolution.y, false);
+        //        UpdateAspectRatio();
+        //    }
+        //}
+
+        if (Input.GetButtonDown("Camera Zoom"))
         {
             if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
                 zoom = Input.GetAxisRaw("Camera Zoom") > 0 ? 1 : 5;
