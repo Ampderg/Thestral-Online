@@ -10,12 +10,13 @@ public class Entity : MonoBehaviour
     private bool hasAuthority;
     internal uint EntityTypeId { get; private set; }
 
-    private void OnDestroy()
+
+    protected virtual void OnDestroy()
     {
         ServerLink.DeregisterEntity(EntityInstanceId);
     }
 
-    internal void Create(uint entityInstanceId, uint entityId, bool hasAuthority)
+    internal virtual void Create(uint entityInstanceId, uint entityId, bool hasAuthority)
     {
         this.EntityInstanceId = entityInstanceId;
         this.hasAuthority = hasAuthority;
@@ -23,7 +24,7 @@ public class Entity : MonoBehaviour
         ServerLink.RegisterEntity(this, entityInstanceId);
     }
 
-    internal bool HasAuthority()
+    internal virtual bool HasAuthority()
     {
         return hasAuthority;
     }

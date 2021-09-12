@@ -14,6 +14,9 @@ public class CameraController : MonoBehaviour
     private Vector2 storedResolution;
 
     [SerializeField]
+    private Vector3 offset = new Vector3(0, 1f, -25f);
+
+    [SerializeField]
     [Range(1f, 4f)]
     private float zoom = 3;
 
@@ -60,7 +63,7 @@ public class CameraController : MonoBehaviour
             UpdateAspectRatio();
 
         if(targetTransform != null)
-            transform.position = targetTransform.position + Vector3.back * 25;
+            transform.position = targetTransform.position + offset;
     }
 
 }

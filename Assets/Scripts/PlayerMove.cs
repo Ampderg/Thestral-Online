@@ -7,6 +7,8 @@ public class PlayerMove : EntityMove
     [SerializeField]
     private PlayerAnimationHandler anims;
 
+    public bool CanMove { get { return !ChatSystem.IsFocused; } }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -18,7 +20,8 @@ public class PlayerMove : EntityMove
     {
         if (HasAuthority())
         {
-            i.velocity = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized * p.walkSpeed;
+            if(CanMove)
+                i.velocity = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized * p.walkSpeed;
         }
         if (anims != null)
         {

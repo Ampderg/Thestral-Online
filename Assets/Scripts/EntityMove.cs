@@ -46,7 +46,8 @@ public class EntityMove : MonoBehaviour
 
     protected virtual void Update()
     {
-        i.timeWithoutVelUpdate += Time.deltaTime;
+        if(!HasAuthority())
+            i.timeWithoutVelUpdate += Time.deltaTime;
     }
 
     // Update is called once per frame

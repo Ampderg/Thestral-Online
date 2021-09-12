@@ -19,6 +19,12 @@ public class ServerLink : MonoBehaviour
     private int port = 59873;
     private Socket socket;
 
+    internal static void SendChatMessage(string text)
+    {
+        text = text.Substring(0, Math.Min(text.Length, 50));
+        instance.SendString("/say|" + text);
+    }
+
     //User info
     [SerializeField]
     private string userName = "Player";
@@ -214,6 +220,12 @@ public class ServerLink : MonoBehaviour
                             case "forceDisconnect":
                                 Disconnect(false);
                                 break;
+                            case "setPlayerInfo":
+                                SetPlayerInfoRecieved();
+                                break;
+                            case "recieveChatMsg":
+                                ChatMessageRecieved(msgTokens[1], msgTokens[2]);
+                                break;
                         }
                     }
                     catch(Exception e)
@@ -345,6 +357,27 @@ public class ServerLink : MonoBehaviour
                 t.position = target;
             }
         }
+    }
+
+    /// <summary>
+    /// Called when a player joins or changes their player info in your instance.
+    /// Used to update character appearance, controlled entity id, username, etc.
+    /// </summary>
+    private void SetPlayerInfoRecieved()
+    {
+        //TODO: add player info
+        //player id
+        //username
+        //character appearance
+        //controlled entity
+    }
+
+    /// <summary>
+    /// Called when a chat message is sent to the local player
+    /// </summary>
+    private void ChatMessageRecieved(string channel, string message)
+    {
+        ChatSystem.OnRecieveChatMessage(channel, message);
     }
     #endregion
 }
