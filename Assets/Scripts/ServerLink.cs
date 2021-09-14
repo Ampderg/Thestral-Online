@@ -2,7 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -52,6 +55,8 @@ public class ServerLink : MonoBehaviour
     [SerializeField]
     protected SpawnableEntityLibrary spawnableEntityLibrary;
     public static event EventHandler<EntityCreatedEventArgs> OnEntityCreated;
+
+    internal string playerString;
 
     public class EntityCreatedEventArgs : EventArgs
     {
@@ -153,6 +158,7 @@ public class ServerLink : MonoBehaviour
         {
             client.Connect(remoteEP);
             Debug.Log("Connected!");
+            SslStream stream = new SslStream(new NetworkStream(client), false, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
             this.socket = client;
             return true;
         }
@@ -161,6 +167,27 @@ public class ServerLink : MonoBehaviour
             Debug.Log(string.Format("SocketException : {0}", se.ToString()));
             return false;
         }
+        catch (AuthenticationException e)
+        {
+            Debug.Log("Authentication failed - closing the connection.");
+            client.Close();
+            return false;
+        }
+    }
+
+    public static bool ValidateServerCertificate(
+              object sender,
+              X509Certificate certificate,
+              X509Chain chain,
+              SslPolicyErrors sslPolicyErrors)
+    {
+        if (sslPolicyErrors == SslPolicyErrors.None)
+            return true;
+
+        Debug.LogError(string.Format("Certificate error: {0}", sslPolicyErrors));
+
+        // Do not allow this client to communicate with unauthenticated servers.
+        return false;
     }
 
     private void ValidateUserInfo()

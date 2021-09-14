@@ -12,7 +12,7 @@ public class PlayerAnimationHandler : MonoBehaviour
     [SerializeField]
     private Transform tailAnchor;
     [SerializeField]
-    private Transform[] flipShift;
+    private List<Transform> flipShift;
 
     [SerializeField]
     private Animator bodyAnimator;
@@ -25,7 +25,7 @@ public class PlayerAnimationHandler : MonoBehaviour
 
     private Coroutine spriteFlipCoroutine;
 
-    public const int SpriteLayersPerPixel = 10;
+    public const int SpriteLayersPerPixel = 100;
 
     public const int playerPPU = 10;
 
@@ -35,13 +35,18 @@ public class PlayerAnimationHandler : MonoBehaviour
     private bool tailLower;
     private bool wingLower;
 
+    public void GenerateSprites(PlayerAppearanceItem[] items)
+    {
+
+    }
+
     // Update is called once per frame
     void Update()
     {
         bodyAnimator.SetBool("Walking", isWalking);
         for(int i = 0; i < spriteRenderOrder.Length; i++)
         {
-            spriteRenderOrder[i].sortingOrder = -((int)(transform.position.y * playerPPU) * 10) + i;
+            spriteRenderOrder[i].sortingOrder = -((int)(transform.position.y * playerPPU) * SpriteLayersPerPixel) + i;
         }
     }
 
@@ -70,7 +75,7 @@ public class PlayerAnimationHandler : MonoBehaviour
             transform.localScale = Vector3.Lerp(startScale, midScale, t * t);
             yield return null;
         }
-        for (int i = 0; i < flipShift.Length; i++)
+        for (int i = 0; i < flipShift.Count; i++)
         {
             flipShift[i].localPosition -= Vector3.right * dir / playerPPU;
         }
@@ -89,7 +94,7 @@ public class PlayerAnimationHandler : MonoBehaviour
     {
         float dir = Mathf.Sign(transform.localScale.x);
         transform.localScale = new Vector3(dir * -1, transform.localScale.y, transform.localScale.z);
-        for (int i = 0; i < flipShift.Length; i++)
+        for (int i = 0; i < flipShift.Count; i++)
         {
             flipShift[i].localPosition -= Vector3.right * dir / playerPPU;
         }
