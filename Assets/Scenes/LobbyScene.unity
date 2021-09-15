@@ -2110,7 +2110,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0, g: 0, b: 0, a: 0.59607846}
   m_CustomCaretColor: 1
   m_SelectionColor: {r: 0.75, g: 0.85919535, b: 1, a: 0.3882353}
-  m_Text: server.ampderg.com
+  m_Text: 192.168.1.177
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 2
   m_ReadOnly: 0
@@ -3037,7 +3037,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "server.ampderg.com\u200B"
+  m_text: "192.168.1.177\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 9bb8f10bf4550b744a834d0547cdd56b, type: 2}
   m_sharedMaterial: {fileID: 176360440196343655, guid: 9bb8f10bf4550b744a834d0547cdd56b,
@@ -4892,7 +4892,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1091122860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7713,7 +7713,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb5d7ea8e3b3f5d4cbd1a8aa7019915b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ipString: server.ampderg.com
+  ipString: 192.168.1.177
   port: 59873
   userName: 
   password: 
@@ -8608,7 +8608,7 @@ GameObject:
   - component: {fileID: 907611996484867}
   - component: {fileID: 3686776077323948556}
   m_Layer: 5
-  m_Name: MainCanvas
+  m_Name: ChatCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -76,6 +76,16 @@
     <Compile Include="Assets\Scripts\UI\PlayerAppearanceItem.cs" />
     <Compile Include="Assets\Scripts\UI\PlayerAppearanceSelectorUI.cs" />
     <Compile Include="Assets\Scripts\UI\PlayerAppearanceItemList.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\Settings\Default.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\UI\LoginWindow.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\LoginConfigurations.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\Settings\Server.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\LoginManager.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\Settings\Notifications.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\Settings\UI.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\UI\RecoverPasswordWindow.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\UI\RegistrationWindow.cs" />
+    <Compile Include="Assets\Packages\Devion Games\Login System\Scripts\Runtime\Settings\Settings.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\Packages\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -716,6 +726,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="DevionGames.Utilities.csproj">
+      <Project>{E18E1F4A-EBC7-0D2D-97CE-188FE79721D2}</Project>
+      <Name>DevionGames.Utilities</Name>
+    </ProjectReference>
+    <ProjectReference Include="DevionGames.UIWidgets.csproj">
+      <Project>{0F17C777-BF75-7683-F7C3-E903892FBEEB}</Project>
+      <Name>DevionGames.UIWidgets</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
