@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +24,11 @@ class IdAssigner
     public void UnassignID(uint id)
     {
         nextIds.Enqueue(id);
+    }
+
+    internal bool IsIdOccupied(uint id)
+    {
+        return id <= highestId && !nextIds.Contains(id);
     }
 }
 

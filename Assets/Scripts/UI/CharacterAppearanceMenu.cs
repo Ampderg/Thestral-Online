@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using System.Linq;
 using System.Text;
 using System;
+using DevionGames.UIWidgets;
 
 public class CharacterAppearanceMenu : MonoBehaviour
 {
@@ -22,105 +23,73 @@ public class CharacterAppearanceMenu : MonoBehaviour
 
     
     [SerializeField]
-    private List<uint> list;
+    private PlayerAppearanceContainer appearance;
 
-    private Dictionary<string, Color> previousColorLookup = new Dictionary<string, Color>();
     private Dictionary<string, FlexibleColorPicker> colorLookups = new Dictionary<string, FlexibleColorPicker>();
     private List<CharacterPreviewItem> previewItems = new List<CharacterPreviewItem>();
 
     [SerializeField]
-    private List<uint> unlockedManes;
-    [SerializeField]
-    private List<uint> unlockedTails;
-
-    [SerializeField]
     private GameObject previewItemPrefab;
 
-    private int currentSelectedManeIndex = 0;
     [SerializeField]
     private TMP_Text maneNameText;
 
+    [SerializeField]
+    private UIWidget uiWidget;
+
     private Dictionary<uint, PlayerAppearanceItemList> registeredAppearanceItems;
 
-    [SerializeField]
-    private PlayerAppearanceItemList[] appearenceItemsToRegister;
+   
 
     // Start is called before the first frame update
     void Start()
     {
         registeredAppearanceItems = new Dictionary<uint, PlayerAppearanceItemList>();
-        previousColorLookup = new Dictionary<string, Color>();
-        for(uint i = 0; i < appearenceItemsToRegister.Length; i++)
+        for(uint i = 0; i < ServerLink.instance.appearanceItemRegistry.registry.Length; i++)
         {
-            registeredAppearanceItems[i] = appearenceItemsToRegister[i];
+            registeredAppearanceItems[i] = ServerLink.instance.appearanceItemRegistry.registry[i];
         }
-        appearenceItemsToRegister = null;
-        RefreshAppearanceList();
+
+        
+    }
+
+    private void Awake()
+    {
+        Action<string> loadChar = SetCharacterFromString;
+        ServerLink.instance.LoadCharacterString(0, loadChar);
     }
 
     #region Serialization
     public void SetCharacterFromString(string s)
     {
-        try
+        PlayerAppearanceContainer c = new PlayerAppearanceContainer(s, ServerLink.playerInfo.unlockedManes);
+        if (c.itemList.Count > 0)
         {
-            list.Clear();
-            string[] lines = s.Split('\n');
-
-            //list ids
-            string[] tokens = lines[0].Split('|');
-            for (int i = 0; i < tokens.Length; i++)
-            {
-                list.Add(uint.Parse(tokens[i]));
-            }
-
-            //equipped bits
-            tokens = lines[1].Split('|');
-            for(int i = 0; i < tokens.Length - 1; i += 2)
-            {
-                string type = tokens[i];
-                switch(type)
-                {
-                    case "m":
-                        currentSelectedManeIndex = unlockedManes.FindIndex(e => e == uint.Parse(tokens[i + 1]));
-                        SetSelectedMane(unlockedManes[currentSelectedManeIndex], false);
-                        break;
-                }
-            }
-
-            //colors
-            tokens = lines[2].Split('|');
-            for (int i = 0; i < tokens.Length - 1; i += 4)
-            {
-                previousColorLookup[tokens[i]] = new Color(int.Parse(tokens[i+1])/ 255f,
-                    int.Parse(tokens[i + 2]) / 255f, int.Parse(tokens[i + 3]) / 255f);
-            }
+            this.appearance = c;
+            SetSelectedMane(ServerLink.playerInfo.unlockedManes[c.currentSelectedManeIndex], false);
+            RefreshAppearanceList(false);
         }
-        catch(Exception ex) when (ex is FormatException || ex is IndexOutOfRangeException)
-        {
-            Debug.Log("String invalid!");
-        }
-        RefreshAppearanceList(false);
     }
 
     public string GetCharacterString()
     {
-        if (list == null || list.Count == 0) return "";
+        if (appearance == null || appearance.itemList.Count == 0) return "";
 
         StringBuilder sb = new StringBuilder();
         bool first = true;
-        for (int i = 0; i < list.Count; i++)
+        for (int i = 0; i < appearance.itemList.Count; i++)
         {
-            sb.Append((first ? "" : "|") + list[i]);
+            sb.Append((first ? "" : ",") + appearance.itemList[i]);
             first = false;
         }
-        sb.Append('\n');
-        sb.Append($"m|{unlockedManes[currentSelectedManeIndex]}");
-        sb.Append('\n');
+        sb.Append('/');
+        sb.Append($"m,{ServerLink.playerInfo.unlockedManes[appearance.currentSelectedManeIndex]}");
+        sb.Append('/');
         first = true;
         foreach(var pair in colorLookups)
         {
             Color c = pair.Value.GetColor();
-            sb.Append((first ? "" : "|") + $"{pair.Key}|{Mathf.RoundToInt(c.r*255f)}|{Mathf.RoundToInt(c.g * 255f)}|{Mathf.RoundToInt(c.b * 255f)}");
+            sb.Append((first ? "" : ",") + $"{pair.Key},{Mathf.RoundToInt(c.r*255f)},{Mathf.RoundToInt(c.g * 255f)},{Mathf.RoundToInt(c.b * 255f)}");
             first = false;
         }
         return sb.ToString();
@@ -140,7 +109,14 @@ public class CharacterAppearanceMenu : MonoBehaviour
 
     public void SaveAndApply()
     {
+        string s = GetCharacterString();
+        ServerLink.instance.SaveCharacterString(s);
+        CloseWindow();
+    }
 
+    public void CloseWindow()
+    {
+        uiWidget.Close();
     }
     #endregion
 
@@ -167,18 +143,18 @@ public class CharacterAppearanceMenu : MonoBehaviour
 
     private void SelectNextMane()
     {
-        if(currentSelectedManeIndex < unlockedManes.Count - 1)
+        if(appearance.currentSelectedManeIndex < ServerLink.playerInfo.unlockedManes.Count - 1)
         {
-            currentSelectedManeIndex++;
-            SetSelectedMane(unlockedManes[currentSelectedManeIndex]);
+            appearance.currentSelectedManeIndex++;
+            SetSelectedMane(ServerLink.playerInfo.unlockedManes[appearance.currentSelectedManeIndex]);
         }
     }
     private void SelectPreviousMane()
     {
-        if (currentSelectedManeIndex > 0)
+        if (appearance.currentSelectedManeIndex > 0)
         {
-            currentSelectedManeIndex--;
-            SetSelectedMane(unlockedManes[currentSelectedManeIndex]);
+            appearance.currentSelectedManeIndex--;
+            SetSelectedMane(ServerLink.playerInfo.unlockedManes[appearance.currentSelectedManeIndex]);
         }
     }
 
@@ -187,8 +163,8 @@ public class CharacterAppearanceMenu : MonoBehaviour
         if(registeredAppearanceItems.ContainsKey(id))
         { 
             PlayerAppearanceItemList l = registeredAppearanceItems[id];
-            list.RemoveAll(e => registeredAppearanceItems[e].itemType == PlayerAppearanceItem.ItemType.Mane);
-            list.Add(id);
+            appearance.itemList.RemoveAll(e => registeredAppearanceItems[e].itemType == PlayerAppearanceItem.ItemType.Mane);
+            appearance.itemList.Add(id);
             maneNameText.text = l.itemName;
             if(refresh) RefreshAppearanceList();
         }
@@ -214,7 +190,7 @@ public class CharacterAppearanceMenu : MonoBehaviour
         {
             foreach (var pair in colorLookups)
             {
-                previousColorLookup[pair.Key] = pair.Value.GetColor();
+                appearance.colors[pair.Key] = pair.Value.GetColor();
             }
         }
 
@@ -231,7 +207,7 @@ public class CharacterAppearanceMenu : MonoBehaviour
 
         colorLookups.Clear();
         previewItems.Clear();
-        list = list.OrderBy(e => registeredAppearanceItems[e].renderOrder).ToList();
+        var list = appearance.itemList.OrderBy(e => registeredAppearanceItems[e].renderOrder).ToList();
         float y = 0;
         foreach (var pair in list)
         {
@@ -253,8 +229,8 @@ public class CharacterAppearanceMenu : MonoBehaviour
                         t.Find("Element Name").GetComponent<TMP_Text>().text = item.colorTag;
                         colorLookups[item.colorTag] = t.Find("FlexibleColorPicker").GetComponent<FlexibleColorPicker>();
 
-                        if (previousColorLookup.ContainsKey(item.colorTag))
-                            colorLookups[item.colorTag].SetColor(previousColorLookup[item.colorTag]);
+                        if (appearance.colors.ContainsKey(item.colorTag))
+                            colorLookups[item.colorTag].SetColor(appearance.colors[item.colorTag]);
 
                         y -= item.uiEditPrefab.rect.height;
                     }

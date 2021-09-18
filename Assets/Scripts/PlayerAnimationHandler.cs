@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,13 +14,19 @@ public class PlayerAnimationHandler : MonoBehaviour
     [SerializeField]
     private Transform tailAnchor;
     [SerializeField]
+    private SpriteRenderer[] bodyAnims;
+    [SerializeField]
+    private List<uint> doNotRenderAppearanceIds;
+    [SerializeField]
+    private List<SpriteRenderer> doNotDestroyOnGenerate;
+    [SerializeField]
     private List<Transform> flipShift;
 
     [SerializeField]
     private Animator bodyAnimator;
 
     [SerializeField]
-    private SpriteRenderer[] spriteRenderOrder;
+    private List<SpriteRenderer> spriteRenderers;
 
     [SerializeField]
     private float spriteFlipTime = 0;
@@ -35,19 +43,92 @@ public class PlayerAnimationHandler : MonoBehaviour
     private bool tailLower;
     private bool wingLower;
 
-    public void GenerateSprites(PlayerAppearanceItem[] items)
+    private void GenerateSprites(PlayerAppearanceContainer c)
     {
+        var itemReg = ServerLink.instance.appearanceItemRegistry.registry;
+        //clear old items
+        flipShift.Clear();
+        for(int i = 0; i < spriteRenderers.Count; i++)
+        {
+            if(!doNotDestroyOnGenerate.Contains(spriteRenderers[i]))
+            {
+                Destroy(spriteRenderers[i].gameObject);
+                spriteRenderers.RemoveAt(i);
+                i--;
+            }
+        }
+        //add new items
+        for (int i = 0; i < c.itemList.Count; i++)
+        {
+            var it = itemReg[c.itemList[i]];
 
+
+            for (int j = 0; j < it.items.Count; j++)
+            {
+                if (!doNotRenderAppearanceIds.Contains(c.itemList[i]))
+                {
+                    GameObject sprite = new GameObject();
+                    switch (it.items[j].spriteAnchor)
+                    {
+                        case PlayerAppearanceItem.SpriteAnchor.Body:
+                            sprite.transform.parent = transform;
+                            break;
+                        case PlayerAppearanceItem.SpriteAnchor.Head:
+                            sprite.transform.parent = headAnchor;
+                            break;
+                        case PlayerAppearanceItem.SpriteAnchor.Tail:
+                            sprite.transform.parent = tailAnchor;
+                            break;
+                        case PlayerAppearanceItem.SpriteAnchor.Wings:
+                            sprite.transform.parent = wingAnchor;
+                            break;
+                    }
+                    sprite.transform.localPosition = Vector3.zero;
+                    sprite.transform.localScale = Vector3.one;
+                    SpriteRenderer sr = sprite.AddComponent<SpriteRenderer>();
+                    sr.sprite = it.items[j].sprite;
+                    if(!string.IsNullOrWhiteSpace(it.items[j].colorTag) && c.colors.ContainsKey(it.items[j].colorTag))
+                        sr.color = c.colors[it.items[j].colorTag];
+                    sr.sortingOrder = it.items[j].renderOrderOffset + it.renderOrder;
+                    if(it.items[j].flipShift)
+                    {
+                        flipShift.Add(sprite.transform);
+                    }
+                    sprite.gameObject.name = it.items[j].name;
+                    spriteRenderers.Add(sr);
+                }
+                else
+                {
+                    switch (it.items[j].colorTag)
+                    {
+                        case "Body":
+                            foreach (var body in bodyAnims)
+                            {
+                                body.color = c.colors["Body"];
+                            }
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
         bodyAnimator.SetBool("Walking", isWalking);
-        for(int i = 0; i < spriteRenderOrder.Length; i++)
+        for(int i = 0; i < spriteRenderers.Count; i++)
         {
-            spriteRenderOrder[i].sortingOrder = -((int)(transform.position.y * playerPPU) * SpriteLayersPerPixel) + i;
+            //spriteRenderers[i].sortingOrder = -((int)(transform.position.y * playerPPU) * SpriteLayersPerPixel) + i;
+            int order = spriteRenderers[i].sortingOrder % SpriteLayersPerPixel;
+            spriteRenderers[i].sortingOrder = -((int)(transform.position.y * playerPPU) * SpriteLayersPerPixel) + order;
         }
+    }
+
+    internal void ParseCharacterString(string s)
+    {
+        PlayerAppearanceContainer c = new PlayerAppearanceContainer(s, ServerLink.playerInfo.unlockedManes);
+        GenerateSprites(c);
     }
 
     public void UpdateDirection(float sign)

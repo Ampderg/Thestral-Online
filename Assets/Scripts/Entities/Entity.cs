@@ -30,4 +30,9 @@ public class Entity : MonoBehaviour
     {
         return hasAuthority;
     }
+
+    internal virtual void SetProperty(string property, string val)
+    {
+
+    }
 }

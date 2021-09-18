@@ -7,6 +7,9 @@ public class EntityPlayer : Entity
     internal bool IsPlayerAssigned { get; private set; }
     internal uint PlayerID { get; private set; }
 
+    [SerializeField]
+    private PlayerAnimationHandler anims;
+
     protected virtual void Start()
     {
         IsPlayerAssigned = false;
@@ -26,5 +29,16 @@ public class EntityPlayer : Entity
         p.hasAuthority = e.HasAuthority();
         p.DisplayName = e.DisplayName;
         Destroy(e);
+    }
+
+    internal override void SetProperty(string property, string val)
+    {
+        base.SetProperty(property, val);
+        switch(property)
+        {
+            case "character_appearance":
+                anims.ParseCharacterString(val);
+                break;
+        }
     }
 }

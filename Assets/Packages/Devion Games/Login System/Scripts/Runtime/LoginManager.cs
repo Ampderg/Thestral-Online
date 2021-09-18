@@ -189,15 +189,15 @@ namespace DevionGames.LoginSystem
 		/// </summary>
 		/// <param name="username">Username.</param>
 		/// <param name="password">Password.</param>
-		public static void LoginAccount(string username, string password)
+		public static void LoginAccount(string username, string password, string clientId)
 		{
 			if (LoginManager.current != null)
 			{
-				LoginManager.current.StartCoroutine(LoginAccountInternal(username, password));
+				LoginManager.current.StartCoroutine(LoginAccountInternal(username, password, clientId));
 			}
 		}
 
-		private static IEnumerator LoginAccountInternal(string username, string password)
+		private static IEnumerator LoginAccountInternal(string username, string password, string clientId)
 		{
 			if (LoginManager.Configurations == null)
 			{
@@ -207,15 +207,11 @@ namespace DevionGames.LoginSystem
 			if (LoginManager.DefaultSettings.debug)
 				Debug.Log("[LoginAccount] Trying to login using username: " + username + " and password: " + password + "!");
 
-			//Connect to TCP server
-			//ask for client id
-			uint client_id = 0;
-
 			//Send login to login server
 			WWWForm newForm = new WWWForm();
 			newForm.AddField("name", username);
 			newForm.AddField("password", password);
-			newForm.AddField("client_id", client_id.ToString());
+			newForm.AddField("client_id", clientId);
 
 			using (UnityWebRequest www = UnityWebRequest.Post(LoginManager.Server.serverAddress + "/" + LoginManager.Server.login, newForm))
 			{
@@ -231,6 +227,7 @@ namespace DevionGames.LoginSystem
 						PlayerPrefs.SetString(LoginManager.Server.accountKey, username);
 						if (LoginManager.DefaultSettings.debug)
 							Debug.Log("[LoginAccount] Login was successfull!");
+						ServerLink.instance.OnLoginSucceed();
 						EventHandler.Execute("OnLogin");
 					}
 					else

@@ -18,3 +18,4 @@ MonoBehaviour:
   renderOrderOffset: 1
   uiEditPrefab: {fileID: 9207432325335324388, guid: 4c6fe2b0ef0831e4f8139315c2ed8d48,
     type: 3}
+  flipShift: 1

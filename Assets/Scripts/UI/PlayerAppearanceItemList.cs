@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-[CreateAssetMenu(menuName = "Scriptable Objects/Player Appearance Item Cluster")]
+[CreateAssetMenu(menuName = "Scriptable Objects/Player Appearance/Item Cluster")]
 public class PlayerAppearanceItemList : ScriptableObject
 {
     public string itemName;

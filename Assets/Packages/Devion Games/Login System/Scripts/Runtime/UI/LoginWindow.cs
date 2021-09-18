@@ -65,11 +65,13 @@ namespace DevionGames.LoginSystem
         }
 
         public void LoginUsingFields() {
-            LoginManager.LoginAccount(username.text, password.text);
             loginButton.interactable = false;
             if (loadingIndicator != null) {
                 loadingIndicator.SetActive(true);
             }
+            ServerLink.instance.SetUsername(username.text);
+            ServerLink.instance.SetPassword(password.text);
+            ServerLink.instance.Connect();
         }
 
         private void OnLogin() {

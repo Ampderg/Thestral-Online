@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   skipLogin: 0
-  loadSceneOnLogin: 1
+  loadSceneOnLogin: 0
   sceneToLoad: LoginSuccessfulScene
   debug: 0
 --- !u!114 &-6335041345592972870

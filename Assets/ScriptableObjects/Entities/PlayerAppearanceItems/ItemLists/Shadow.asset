@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemName: 
   itemType: 0
-  renderOrder: 0
+  renderOrder: 1
   items:
   - {fileID: 11400000, guid: 626d94a7f9ccf5946856323b5b24c5fc, type: 2}

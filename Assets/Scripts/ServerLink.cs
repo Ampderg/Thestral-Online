@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DevionGames.LoginSystem;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
@@ -12,8 +13,22 @@ using UnityEngine.SceneManagement;
 
 public class ServerLink : MonoBehaviour
 {
+    [System.Serializable]
+    internal class PlayerInfo
+    {
+        [SerializeField]
+        internal List<uint> unlockedManes;
+        [SerializeField]
+        internal List<uint> unlockedTails;
+    }
 
-    protected static ServerLink instance;
+
+    internal static PlayerInfo playerInfo { get { return instance._playerInfo; } }
+
+    [SerializeField]
+    private PlayerInfo _playerInfo;
+
+    internal static ServerLink instance;
 
     //Server info
     [SerializeField]
@@ -23,7 +38,10 @@ public class ServerLink : MonoBehaviour
     private int port = 59873;
     public void SetPort(string portString) { int.TryParse(portString, out port); }
 
-
+    private string username;
+    public void SetUsername(string value) { username = value; }
+    private string password;
+    public void SetPassword(string value) { password = value; }
 
     private Socket socket;
 
@@ -33,14 +51,7 @@ public class ServerLink : MonoBehaviour
         instance.SendString("say|" + text);
     }
 
-    //User info
-    [SerializeField]
-    private string userName = "Player";
-    public void SetLoginUsername(string userName) { this.userName = userName; }
-
-    [SerializeField]
-    private string password;
-    public void SetLoginPassword(string password) { this.password = password; }
+    private uint clientId;
 
     [SerializeField]
     private GameObject activeWhenConnected;
@@ -56,7 +67,12 @@ public class ServerLink : MonoBehaviour
     protected SpawnableEntityLibrary spawnableEntityLibrary;
     public static event EventHandler<EntityCreatedEventArgs> OnEntityCreated;
 
+    [SerializeField]
+    internal PlayerAppearanceItemRegistry appearanceItemRegistry;
+
     internal string playerString;
+
+    private Dictionary<uint, Action<string>> stringCallbacks = new Dictionary<uint, Action<string>>();
 
     public class EntityCreatedEventArgs : EventArgs
     {
@@ -79,7 +95,7 @@ public class ServerLink : MonoBehaviour
         }
         instance = this;
         DontDestroyOnLoad(gameObject);
-        messageId = new IdAssigner();
+        messageId = new IdAssigner();   
         messagesSent = new Dictionary<uint, string>();
         networkedEntities = new Dictionary<uint, Entity>();
     }
@@ -112,14 +128,23 @@ public class ServerLink : MonoBehaviour
         {
             validMessage = null;
             ValidateUserInfo();
-            while (validMessage == null)
+            float time = 0;
+            while (validMessage == null && time < 5f)
             {
+                time += 0.1f;
                 yield return new WaitForSeconds(0.1f);
+                //TODO: break out of connection loop if login fails
             }
-            if (validMessage.ToLower() == "valid")
+            if (validMessage?.ToLower() == "valid")
             {
                 JoinScene(1);
                 activeWhenConnected.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning("Verification timed out");
+                DevionGames.EventHandler.Execute("OnFailedToLogin");
+                Disconnect();
             }
         }
         connectionCoroutine = null;
@@ -138,9 +163,12 @@ public class ServerLink : MonoBehaviour
             if (connectionCoroutine != null)
                 StopCoroutine(connectionCoroutine);
             socket.Disconnect(false);
-            Destroy(gameObject);
-            //return to lobby
-            SceneManager.LoadScene(0);
+            if (SceneManager.GetActiveScene().buildIndex != 0)
+            {
+                Destroy(gameObject);
+                //return to lobby
+                SceneManager.LoadScene(0);
+            }
         }
     }
 
@@ -164,12 +192,14 @@ public class ServerLink : MonoBehaviour
         catch (SocketException se)
         {
             Debug.Log(string.Format("SocketException : {0}", se.ToString()));
+            DevionGames.EventHandler.Execute("OnFailedToLogin");
             return false;
         }
         catch (AuthenticationException e)
         {
             Debug.Log("Authentication failed - closing the connection.");
             client.Close();
+            DevionGames.EventHandler.Execute("OnFailedToLogin");
             return false;
         }
     }
@@ -177,8 +207,7 @@ public class ServerLink : MonoBehaviour
 
     private void ValidateUserInfo()
     {
-        SendString(string.Format("validate|{0}|{1}", userName, ""));
-        //TODO: Send desired character to server
+        SendString(string.Format("validate|{0}", username));
     }
 
     private void JoinScene(int sceneId)
@@ -190,13 +219,14 @@ public class ServerLink : MonoBehaviour
 
     #endregion
 
-    private void SendString(string s)
+    private uint SendString(string s)
     {
         uint id = messageId.GetFreeID();
         messagesSent[id] = s;
         string message = string.Format("{0}:{1}\n", id, s);
         Debug.Log("Sending Message: " + message);
         socket.Send(Encoding.ASCII.GetBytes(message));
+        return id;
     }
 
     private void SendStringWithoutId(string s)
@@ -225,7 +255,10 @@ public class ServerLink : MonoBehaviour
                 switch (msgTokens[0])
                 {
                     case "validate":
-                        ValidationResultRecieved(msgTokens[1]);
+                        ValidationResultRecieved(msgTokens[1], uint.Parse(msgTokens[2]));
+                        break;
+                    case "login":
+                        LoginResultRecieved(msgTokens[1]);
                         break;
                     case "createEntity":
                         CreateEntityRecieved(uint.Parse(msgTokens[5]), uint.Parse(msgTokens[1]), uint.Parse(msgTokens[6]), bool.Parse(msgTokens[4]), 
@@ -233,6 +266,9 @@ public class ServerLink : MonoBehaviour
                         break;
                     case "destroyEntity":
                         DestroyEntityRecieved(uint.Parse(msgTokens[1]));
+                        break;
+                    case "setEntityProperty":
+                        SetEntityPropertyRecieved(uint.Parse(msgTokens[1]), msgTokens[2], msgTokens[3]);
                         break;
                     case "m":
                     case "move":
@@ -250,6 +286,13 @@ public class ServerLink : MonoBehaviour
                         break;
                     case "recieveChatMsg":
                         ChatMessageRecieved(msgTokens[1], msgTokens[3], msgTokens[2]);
+                        break;
+                    case "stringCallback":
+                        if(stringCallbacks.ContainsKey(msgId))
+                        {
+                            stringCallbacks[msgId](msgTokens[1]);
+                            stringCallbacks.Remove(msgId);
+                        }
                         break;
                     default:
                         Debug.LogWarning("Recieved a message from the server that doesn't exist on the client!" + Environment.NewLine + s);
@@ -273,6 +316,9 @@ public class ServerLink : MonoBehaviour
             Debug.LogError("Recieved a message from the server with a bad format! " + s);
         }
     }
+
+
+
 
     #region Entities
     internal static void RegisterEntity(Entity entity, uint entityInstanceId)
@@ -318,8 +364,39 @@ public class ServerLink : MonoBehaviour
         }
     }
 
+    #region Character Handling
+    public void SaveCharacterString(string s, uint charId = 0)
+    {
+        SendStringWithoutId($"setChar|{charId}|{s}");
+    }
+
+    public void LoadCharacterString(uint charId, Action<string> callback)
+    {
+        uint id = SendString($"getChar|{charId}");
+        stringCallbacks[id] = callback;
+    }
+    #endregion
+
     #region Server Messages
-    private void ValidationResultRecieved(string message)
+
+    private void ValidationResultRecieved(string message, uint clientId)
+    {
+        Debug.Log("Validation Result: " + message);
+        if(message.ToLower() == "valid")
+        {
+            this.clientId = clientId;
+            //DO LOG IN
+            LoginManager.LoginAccount(username, password, clientId.ToString());
+        }
+        //TODO: Get player's current scene from validation
+    }
+
+    internal void OnLoginSucceed()
+    {
+        SendString("login");
+    }
+
+    private void LoginResultRecieved(string message)
     {
         Debug.Log("Validation Result: " + message);
         validMessage = message;
@@ -338,7 +415,7 @@ public class ServerLink : MonoBehaviour
         }
         GameObject o = Instantiate(spawnableEntityLibrary.GetEntity(entityTypeId), spawnedEntityParent);
         o.transform.position = new Vector3((float)pixelX / Game.PixelsPerUnit, (float)pixelY / Game.PixelsPerUnit, 0f);
-        Entity e = o.AddComponent<Entity>();
+        Entity e = o.GetComponent<Entity>();
         e.Create(entityInstanceId, entityTypeId, hasAuthority, displayName);
         o.gameObject.name = displayName;
         EntityMove move = o.GetComponent<EntityMove>();
@@ -356,6 +433,11 @@ public class ServerLink : MonoBehaviour
     {
         Destroy(networkedEntities[entityInstanceId].gameObject);
         networkedEntities.Remove(entityInstanceId);
+    }
+
+    private void SetEntityPropertyRecieved(uint entityId, string property, string val)
+    {
+        networkedEntities[entityId].SetProperty(property, val);
     }
 
     private void JoinSceneRecieved()
